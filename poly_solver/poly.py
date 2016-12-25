@@ -2,6 +2,7 @@ import copy
 from random import choice
 import shapely.geometry as geometry
 import sys
+from tinydb import TinyDB, Query
 
 
 def random_vertex(rows, columns):
@@ -108,6 +109,8 @@ if __name__ == "__main__":
     n should be the number of vertex's and rows/columns.
     limit should be the number of random polygons to create.
     """
+    Q = Query()
+
     path = sys.argv[0]
     n = sys.argv[1]
     try:
@@ -131,15 +134,43 @@ if __name__ == "__main__":
     min = (poly.area, coords)
     max = (poly.area, coords)
     for r in range(limit):
-        print("Try {0}, area = {1}".format(r, poly.area))
-        print("Min = {0}, max = {1}".format(min[0], max[0]))
-        print("Min: {0}".format(min[1]))
-        print("Max: {0}".format(max[1]))
+        # print("Try {0}, area = {1}".format(r, poly.area))
+        # print("Min = {0}, max = {1}".format(min[0], max[0]))
+        # print("Min: {0}".format(min[1]))
+        # print("Max: {0}".format(max[1]))
         coords = None
         while not coords:
             coords = grow_a_polygon(n)
         poly = geometry.Polygon(coords)
-        if poly.area > max[0]:
-            max = (poly.area, coords)
-        if poly.area < min[0]:
-            min = (poly.area, coords)
+        # if poly.area > max[0]:
+        #    max = (poly.area, coords)
+        # if poly.area < min[0]:
+        #    min = (poly.area, coords)
+        db = TinyDB('db.json')
+        result = db.search(Q.n == n)  # search open DB connection for entries of an n size
+        # print(result)
+        if len(result) == 0:
+            # if first entry, initlise the db values:
+            # print("no entry")
+            db.insert({'n': n, 'max_area': poly.area,
+                       'max_coordinates': coordinates,
+                       'min_area': poly.area,
+                       'min_coordinates': coordinates})
+        elif len(result) == 1:
+            # print('entry')
+            if poly.area > result[0]['max_area']:
+                # if a new max is found, remove old one and write new one to the db
+                tmp = result[0]
+                tmp['max_area'] = poly.area
+                tmp['max_coordinate'] = coordinates
+                db.remove(eids=[result[0].eid])
+                db.insert(tmp)
+            if poly.area < result[0]['min_area']:
+                tmp = result[0]
+                tmp['min_area'] = poly.area
+                tmp['min_coordinate'] = coordinates
+                db.remove(eids=[result[0].eid])
+                db.insert(tmp)
+        else:
+            # print('More than one entry')
+            raise ValueError("> 1 result found for n={} in DB file".format(n))
