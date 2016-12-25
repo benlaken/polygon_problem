@@ -114,7 +114,7 @@ if __name__ == "__main__":
     path = sys.argv[0]
     n = sys.argv[1]
     try:
-        int(n)
+        n = int(n)
     except:
         raise ValueError("n wasn't a number")
     valid_ns = [5, 7, 11, 17, 23, 29, 37, 47, 59, 71, 83, 97, 113, 131, 149,
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         raise ValueError("n must be one of: {0}".format(valid_ns))
     limit = sys.argv[2]
     try:
-        int(limit)
+        limit = int(limit)
     except:
         raise ValueError("Limit wasn't a number")
     # Calculate a first polygon and use to initilise
@@ -151,24 +151,22 @@ if __name__ == "__main__":
         # print(result)
         if len(result) == 0:
             # if first entry, initlise the db values:
-            # print("no entry")
             db.insert({'n': n, 'max_area': poly.area,
-                       'max_coordinates': coordinates,
+                       'max_coordinates': coords,
                        'min_area': poly.area,
-                       'min_coordinates': coordinates})
+                       'min_coordinates': coords})
         elif len(result) == 1:
-            # print('entry')
             if poly.area > result[0]['max_area']:
                 # if a new max is found, remove old one and write new one to the db
                 tmp = result[0]
                 tmp['max_area'] = poly.area
-                tmp['max_coordinate'] = coordinates
+                tmp['max_coordinates'] = coords
                 db.remove(eids=[result[0].eid])
                 db.insert(tmp)
             if poly.area < result[0]['min_area']:
                 tmp = result[0]
                 tmp['min_area'] = poly.area
-                tmp['min_coordinate'] = coordinates
+                tmp['min_coordinates'] = coords
                 db.remove(eids=[result[0].eid])
                 db.insert(tmp)
         else:
