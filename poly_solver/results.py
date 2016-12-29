@@ -2,6 +2,14 @@ import sys
 from tinydb import TinyDB, Query
 
 
+def parse_me(coords):
+    tmp = []
+    for xy in coords:
+        x, y = xy
+        tmp.append((x,y))
+    return tmp
+
+
 if __name__ == "__main__":
     """
     Return the details for the Database
@@ -17,6 +25,7 @@ if __name__ == "__main__":
             result = result[0]
             print("\nFor n={0}:".format(n))
             print("min={0}, max={1}".format(result['min_area'], result['max_area']))
-            print("\nmin_coordinates= {0}".format(result['min_coordinates']))
-            print("\nmax_coordinates= {0}".format(result["max_coordinates"]))
+            print("Diffrence={0}".format(result['max_area'] - result['min_area']))
+            print("\nmin_coordinates: {0}".format(parse_me(result['min_coordinates'])))
+            print("\nmax_coordinates: {0}".format(parse_me(result["max_coordinates"])))
             print("------------------------------------")

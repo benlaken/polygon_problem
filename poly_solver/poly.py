@@ -1,4 +1,8 @@
 import copy
+import logging
+from tqdm import tqdm
+logger = logging.getLogger()
+logger.setLevel(logging.ERROR)
 from random import choice
 import shapely.geometry as geometry
 import sys
@@ -17,7 +21,7 @@ def random_vertex(rows, columns):
     return (random_row, random_column), tmp_rows, tmp_columns
 
 
-def random_triangle(rows, columns, try_limit=10):
+def random_triangle(rows, columns, try_limit=50):
     """Obtain coordinates for a starting shape from a grid of n x n,
     for the simplest valid ploygon: a triangle"""
     area = 0.0
@@ -76,7 +80,7 @@ def grow_a_polygon(n):
     jj = 0
     while len(coordinates) < n:
         jj += 1
-        if jj > 20:
+        if jj > n * 2:  # Problem here....
             return None
         if len(rows) > 0:
             tmp_vertex, tmp_rows, tmp_columns = random_vertex(rows, columns)
@@ -90,7 +94,7 @@ def grow_a_polygon(n):
             tmp_coordinates = copy.deepcopy(coordinates)
             tmp_coordinates.insert(i, tmp_vertex)
             tmp_poly = geometry.Polygon(tmp_coordinates)
-            is_valid_shape = tmp_poly.is_valid  # self-intersection comes here
+            is_valid_shape = tmp_poly.is_valid  # self-intersection problem comes here
             no_slope_repeats = check_slopes(tmp_coordinates)
             if is_valid_shape and no_slope_repeats:
                 rows = copy.deepcopy(tmp_rows)
@@ -149,7 +153,6 @@ def put_in_DB(coords, poly):
             db.remove(eids=[result[0].eid])
             db.insert(tmp)
     else:
-        # print('More than one entry')
         raise ValueError("> 1 result found for n={} in DB file".format(n))
 
 
@@ -160,12 +163,7 @@ if __name__ == "__main__":
     """
     n, limit = check_commandline_inputs(sys.argv[1], sys.argv[2])
     coords = None
-    # while not coords:
-    #    coords = grow_a_polygon(n)
-    # poly = geometry.Polygon(coords)
-    # min = (poly.area, coords)
-    # max = (poly.area, coords)
-    for r in range(limit):
+    for r in tqdm(range(limit)):
         coords = None
         while not coords:
             coords = grow_a_polygon(n)
